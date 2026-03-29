@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>משחקי השלמה — ליגת פאדל</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f0f2f5;
+    color: #1a1a1a;
+    padding: 20px;
+    direction: rtl;
+  }
+  h1 {
+    text-align: center;
+    font-size: 22px;
+    margin-bottom: 20px;
+    color: #1a1a2e;
+  }
+  .search-box {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  select, input {
+    padding: 10px 14px;
+    font-size: 15px;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    outline: none;
+    direction: rtl;
+    min-width: 220px;
+    background: white;
+  }
+  select:focus, input:focus { border-color: #4a90d9; }
+  .results { max-width: 700px; margin: 0 auto; }
+  .date-group {
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .date-header {
+    background: #1a1a2e;
+    color: white;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: bold;
+  }
+  .game-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .game-row:last-child { border-bottom: none; }
+  .time {
+    background: #e8f0fe;
+    color: #1a73e8;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: bold;
+    min-width: 60px;
+    text-align: center;
+  }
+  .pair { font-size: 14px; font-weight: 600; }
+  .vs {
+    color: #888;
+    font-size: 12px;
+    background: #f5f5f5;
+    padding: 3px 8px;
+    border-radius: 6px;
+  }
+  .no-results {
+    text-align: center;
+    padding: 40px;
+    color: #888;
+    font-size: 16px;
+    background: white;
+    border-radius: 12px;
+  }
+  .highlight { background: #fff3cd; border-radius: 4px; padding: 0 2px; }
+  .no-date-header {
+    background: #888;
+  }
+  .all-pairs-tag {
+    display: inline-block;
+    background: #e8f0fe;
+    color: #1a73e8;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    cursor: pointer;
+    margin: 2px;
+  }
+  .all-pairs-tag:hover { background: #1a73e8; color: white; }
+  .tags-wrap { text-align: center; margin-bottom: 16px; max-width: 700px; margin-left: auto; margin-right: auto; }
+</style>
+</head>
+<body>
+<h1>🎾 משחקי השלמה — ליגת פאדל</h1>
+
+<div class="search-box">
+  <select id="pairSelect" onchange="filterByPair(this.value)">
+    <option value="">— בחר זוג —</option>
+  </select>
+  <input type="text" id="searchInput" placeholder="חיפוש חופשי..." oninput="filterByText(this.value)">
+</div>
+
+<div class="tags-wrap" id="tagsWrap"></div>
+<div class="results" id="results"></div>
+
+<script>
+const games = [
+  { date: '1.4', day: "ד'", time: '12:00', p1: 'מויאל/פינטו', p2: 'אסרף/קלימי' },
+  { date: '2.4', day: "ה'", time: '10:00', p1: 'הרוש/מלכה', p2: 'בלסיוס/מעיין' },
+  { date: '2.4', day: "ה'", time: '11:00', p1: 'לוין/לוין', p2: 'אזולאי/פרץ' },
+  { date: '3.4', day: "ו'", time: '07:30', p1: 'לוין/לוין', p2: 'אסולין/יקובסקי' },
+  { date: '3.4', day: "ו'", time: '09:00', p1: 'מויאל/פינטו', p2: 'הרוש/מלכה' },
+  { date: '3.4', day: "ו'", time: '10:30', p1: 'בן ישי/פלנגריאלי', p2: 'בלסיוס/מעיין' },
+  { date: '4.4', day: "ש'", time: '12:00', p1: 'לוין/לוין', p2: 'אביטבול/כהן' },
+  { date: '4.4', day: "ש'", time: '12:00', p1: 'מויאל/פינטו', p2: 'בן ישי/פלנגריאלי' },
+  { date: '5.4', day: "א'", time: '21:00', p1: 'גדליהו/גדליהו', p2: 'אילוז/וקנין' },
+  { date: '7.4', day: "ג'", time: '08:00', p1: 'גדליהו/גדליהו', p2: 'אלבז/דרו' },
+  { date: '7.4', day: "ג'", time: '08:00', p1: 'כהן/קלימי', p2: 'בלסיוס/מעיין' },
+  { date: '7.4', day: "ג'", time: '09:30', p1: 'בן דוד/שמעוני', p2: 'אזולאי/פרץ' },
+  { date: '7.4', day: "ג'", time: '09:30', p1: 'הרוש/מלכה', p2: 'דמרי/פיק' },
+  { date: '8.4', day: "ד'", time: '09:00', p1: 'בן ישי/פלנגריאלי', p2: 'אוחיון/אלמקייס' },
+  { date: '10.4', day: "ו'", time: '08:00', p1: 'דמרי/פיק', p2: 'בלסיוס/מעיין' },
+  { date: '10.4', day: "ו'", time: '08:00', p1: 'כהן/קלימי', p2: 'הרוש/מלכה' },
+  { date: '10.4', day: "ו'", time: '09:30', p1: 'בן ישי/פלנגריאלי', p2: 'אסרף/קלימי' },
+  // no date
+  { date: '', day: '', time: '', p1: 'אסולין/סקירה', p2: 'אוזן/דר' },
+  { date: '', day: '', time: '', p1: 'אסולין/סקירה', p2: 'איפרגן/לביא' },
+  { date: '', day: '', time: '', p1: 'בורדובסקי/שוורץ', p2: 'אסולין/סקירה' },
+  { date: '', day: '', time: '', p1: 'ברנס/שניא', p2: 'אסולין/סקירה' },
+  { date: '', day: '', time: '', p1: 'מילינסקי/פופוב', p2: 'אסולין/סקירה' },
+  { date: '', day: '', time: '', p1: 'מילינסקי/פופוב', p2: 'אוזן/דר' },
+  { date: '', day: '', time: '', p1: 'סקולצקי/שושן', p2: 'ברנס/שניא' },
+];
+
+// Collect all unique pairs
+const allPairs = [...new Set(games.flatMap(g => [g.p1, g.p2]))].sort();
+
+// Populate select
+const sel = document.getElementById('pairSelect');
+allPairs.forEach(p => {
+  const opt = document.createElement('option');
+  opt.value = p;
+  opt.textContent = p;
+  sel.appendChild(opt);
+});
+
+// Populate tags
+const tagsWrap = document.getElementById('tagsWrap');
+allPairs.forEach(p => {
+  const tag = document.createElement('span');
+  tag.className = 'all-pairs-tag';
+  tag.textContent = p;
+  tag.onclick = () => {
+    sel.value = p;
+    document.getElementById('searchInput').value = '';
+    filterByPair(p);
+  };
+  tagsWrap.appendChild(tag);
+});
+
+function renderGames(filtered) {
+  const container = document.getElementById('results');
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="no-results">לא נמצאו משחקים</div>';
+    return;
+  }
+
+  // Group by date
+  const groups = {};
+  filtered.forEach(g => {
+    const key = g.date || 'ללא תאריך';
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(g);
+  });
+
+  const dateOrder = Object.keys(groups).sort((a, b) => {
+    if (a === 'ללא תאריך') return 1;
+    if (b === 'ללא תאריך') return -1;
+    const [ad, am] = a.split('.').map(Number);
+    const [bd, bm] = b.split('.').map(Number);
+    return (am*100+ad) - (bm*100+bd);
+  });
+
+  let html = '';
+  dateOrder.forEach(dateKey => {
+    const group = groups[dateKey];
+    const day = group[0].day ? ` (יום ${group[0].day})` : '';
+    const headerClass = dateKey === 'ללא תאריך' ? 'date-header no-date-header' : 'date-header';
+    html += `<div class="date-group">
+      <div class="${headerClass}">📅 ${dateKey}${day}</div>`;
+    group.sort((a,b) => a.time.localeCompare(b.time));
+    group.forEach(g => {
+      const timeHtml = g.time ? `<span class="time">${g.time}</span>` : '<span class="time" style="background:#f5f5f5;color:#aaa">—</span>';
+      html += `<div class="game-row">
+        ${timeHtml}
+        <span class="pair">${g.p1}</span>
+        <span class="vs">🆚</span>
+        <span class="pair">${g.p2}</span>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  container.innerHTML = html;
+}
+
+function filterByPair(pair) {
+  document.getElementById('searchInput').value = '';
+  if (!pair) { renderGames(games); return; }
+  renderGames(games.filter(g => g.p1 === pair || g.p2 === pair));
+}
+
+function filterByText(text) {
+  document.getElementById('pairSelect').value = '';
+  if (!text.trim()) { renderGames(games); return; }
+  const q = text.trim().toLowerCase();
+  renderGames(games.filter(g =>
+    g.p1.toLowerCase().includes(q) ||
+    g.p2.toLowerCase().includes(q) ||
+    g.date.includes(q)
+  ));
+}
+
+// Init
+renderGames(games);
+</script>
+</body>
+</html>
