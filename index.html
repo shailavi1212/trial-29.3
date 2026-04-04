@@ -87,10 +87,7 @@
     background: white;
     border-radius: 12px;
   }
-  .highlight { background: #fff3cd; border-radius: 4px; padding: 0 2px; }
-  .no-date-header {
-    background: #888;
-  }
+  .no-date-header { background: #888; }
   .all-pairs-tag {
     display: inline-block;
     background: #e8f0fe;
@@ -126,22 +123,20 @@ const games = [
   { date: '7.4',  day: "ג'", time: '11:00', p1: 'בן דוד/שמעוני',     p2: 'אזולאי/פרץ' },
   { date: '10.4', day: "ו'", time: '07:30', p1: 'לוין/לוין',           p2: 'אזולאי/פרץ' },
   { date: '10.4', day: "ו'", time: '09:00', p1: 'בלסיוס/מעיין',      p2: 'הרוש/מלכה' },
-  { date: '10.4', day: "ו'", time: '12:30', p1: 'מויאל/פינטו',        p2: 'בן ישי/פלגריאלי' },
-  { date: '10.4', day: "ו'", time: '14:00', p1: 'בן ישי/פלנגריאלי', p2: 'אוחיון/אלמקייס' },
+  { date: '10.4', day: "ו'", time: '12:30', p1: 'מויאל/פינטו',        p2: 'בן ישי/פלגיארי' },
+  { date: '10.4', day: "ו'", time: '14:00', p1: 'בן ישי/פלגיארי',    p2: 'אוחיון/אלמקייס' },
   { date: '11.4', day: "ש'", time: '18:00', p1: 'מויאל/פינטו',        p2: 'אסרף/קלימי' },
   { date: '11.4', day: "ש'", time: '18:00', p1: 'לוין/לוין',           p2: 'אביטבול/כהן' },
   { date: '12.4', day: "א'", time: '21:00', p1: 'גדליהו/גדליהו',    p2: 'אילוז/וקנין' },
   { date: '12.4', day: "א'", time: '21:00', p1: 'לוין/לוין',           p2: 'אסולין/יקובסקי' },
-  { date: '13.4', day: "ב'", time: '08:30', p1: 'הרוש/מלכה',         p2: 'מיטשל/דור' },
+  { date: '13.4', day: "ב'", time: '08:30', p1: 'הרוש/מלכה',         p2: 'בלסיוס/מעיין' },
   { date: '15.4', day: "ג'", time: '16:00', p1: 'פיק/דמרי',            p2: 'הרוש/מלכה' },
-  { date: '17.4', day: "ד'", time: '09:00', p1: 'בן ישי/פלגריאלי', p2: 'בלסיוס/מעיין' },
-  { date: '17.4', day: "ד'", time: '10:30', p1: 'בן ישי/פלנגריאלי', p2: 'אסרף/קלימי' },
+  { date: '17.4', day: "ו'", time: '09:00', p1: 'בן ישי/פלגיארי',    p2: 'בלסיוס/מעיין' },
+  { date: '17.4', day: "ו'", time: '10:30', p1: 'בן ישי/פלגיארי',    p2: 'אסרף/קלימי' },
 ];
 
-// Collect all unique pairs
 const allPairs = [...new Set(games.flatMap(g => [g.p1, g.p2]))].sort();
 
-// Populate select
 const sel = document.getElementById('pairSelect');
 allPairs.forEach(p => {
   const opt = document.createElement('option');
@@ -150,7 +145,6 @@ allPairs.forEach(p => {
   sel.appendChild(opt);
 });
 
-// Populate tags
 const tagsWrap = document.getElementById('tagsWrap');
 allPairs.forEach(p => {
   const tag = document.createElement('span');
@@ -170,15 +164,12 @@ function renderGames(filtered) {
     container.innerHTML = '<div class="no-results">לא נמצאו משחקים</div>';
     return;
   }
-
-  // Group by date
   const groups = {};
   filtered.forEach(g => {
     const key = g.date || 'ללא תאריך';
     if (!groups[key]) groups[key] = [];
     groups[key].push(g);
   });
-
   const dateOrder = Object.keys(groups).sort((a, b) => {
     if (a === 'ללא תאריך') return 1;
     if (b === 'ללא תאריך') return -1;
@@ -186,23 +177,16 @@ function renderGames(filtered) {
     const [bd, bm] = b.split('.').map(Number);
     return (am*100+ad) - (bm*100+bd);
   });
-
   let html = '';
   dateOrder.forEach(dateKey => {
     const group = groups[dateKey];
     const day = group[0].day ? ` (יום ${group[0].day})` : '';
     const headerClass = dateKey === 'ללא תאריך' ? 'date-header no-date-header' : 'date-header';
-    html += `<div class="date-group">
-      <div class="${headerClass}">📅 ${dateKey}${day}</div>`;
+    html += `<div class="date-group"><div class="${headerClass}">📅 ${dateKey}${day}</div>`;
     group.sort((a,b) => a.time.localeCompare(b.time));
     group.forEach(g => {
       const timeHtml = g.time ? `<span class="time">${g.time}</span>` : '<span class="time" style="background:#f5f5f5;color:#aaa">—</span>';
-      html += `<div class="game-row">
-        ${timeHtml}
-        <span class="pair">${g.p1}</span>
-        <span class="vs">🆚</span>
-        <span class="pair">${g.p2}</span>
-      </div>`;
+      html += `<div class="game-row">${timeHtml}<span class="pair">${g.p1}</span><span class="vs">🆚</span><span class="pair">${g.p2}</span></div>`;
     });
     html += '</div>';
   });
@@ -226,7 +210,6 @@ function filterByText(text) {
   ));
 }
 
-// Init
 renderGames(games);
 </script>
 </body>
